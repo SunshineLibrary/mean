@@ -38,7 +38,21 @@
         "bower": "latest",
         "grunt": "latest",
         "grunt-cli": "latest",
-        "grunt-env": "latest"
+        "grunt-env": "latest",
+
+        "underscore": "1.5.2",
+        "underscore.string": "2.3.3",
+        "tar": "0.1.18",
+        "archiver": "0.4.10",
+        "node-uuid": "1.4.0",
+        "adm-zip": "0.4.3",
+        "request": "*",
+        "ip": "0.1.0",
+        "fs-extra": "0.8.1",
+        "dive": "0.3.0",
+        "fstream": "0.1.24",
+        "base32": "0.0.5",
+        "temp": "0.x"
     },
     "devDependencies": {
         "supertest": "latest",
