@@ -1,6 +1,7 @@
 module.exports = function(app, passport, auth) {
     //User Routes
     var users = require('../app/controllers/users');
+    var rooms = require('../app/controllers/rooms');
     app.get('/signin', users.signin);
     app.get('/signup', users.signup);
     app.get('/signout', users.signout);
@@ -8,6 +9,18 @@ module.exports = function(app, passport, auth) {
 
     //Setting up the users api
     app.post('/users', users.create);
+    app.get('/users', users.all);
+    app.get('/users/:userId', users.show);
+    app.del('/users/:userId', users.destroy);
+    app.get('/users/:userId/rooms',users.rooms);
+
+    app.get('/rooms', rooms.all);
+    app.post('/rooms', rooms.create);
+    app.get('/rooms/:roomId', rooms.show);
+    app.del('/rooms/:roomId', rooms.destroy);
+    app.get('/rooms/:roomId/users', rooms.users);
+    app.post('/rooms/:roomId/users', rooms.joinRoom);
+    app.del('/rooms/:roomId/users/:userId', rooms.exitRoom);
 
     //Setting the local strategy route
     app.post('/users/session', passport.authenticate('local', {
@@ -58,6 +71,7 @@ module.exports = function(app, passport, auth) {
 
     //Finish with setting up the userId param
     app.param('userId', users.user);
+    app.param('roomId', rooms.room);
 
     //Article Routes
     var articles = require('../app/controllers/articles');
@@ -73,5 +87,4 @@ module.exports = function(app, passport, auth) {
     //Home route
     var index = require('../app/controllers/index');
     app.get('/', index.render);
-
 };
