@@ -6,13 +6,13 @@
  * To change this template use File | Settings | File Templates.
  */
 
-var fs = require("fs")
-    , path = require("path")
-    , base32 = require("base32");
+var fs = require("node-fs"),
+    path = require("path"),
+    base32 = require("base32");
 
 exports.init = function (userdataFolder) {
     if (!fs.existsSync(userdataFolder)) {
-        fs.mkdirSync(userdataFolder);
+        fs.mkdirSync(userdataFolder, 0777, true);
         console.log("user data folder not exists,make one," + userdataFolder);
     }
     if (!fs.existsSync(userdataFolder)) {
@@ -25,7 +25,7 @@ exports.init = function (userdataFolder) {
             , userFolder = path.join(userdataFolder, user)
             , dataFile = path.join(userFolder, fileName);
         if (!fs.existsSync(userFolder)) {
-            fs.mkdirSync(userFolder);
+            fs.mkdirSync(userFolder, 0777, true);
         }
         fs.writeFileSync(dataFile, data);
         return data;

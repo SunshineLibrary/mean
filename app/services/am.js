@@ -1,7 +1,6 @@
-
 var _ = require("underscore")
     , _str = require("underscore.string")
-    , fs = require("fs")
+    , fs = require("node-fs")
     , path = require('path')
     , dive = require('dive')
     , fsext = require('fs-extra')
@@ -18,7 +17,7 @@ exports.init = function (appBase, downloadBase) {
     console.log("init app manager,%s,%s", appBase, downloadBase);
     var apps = {};
     if (!fs.existsSync(appBase)) {
-        fs.mkdirSync(appBase);
+        fs.mkdirSync(appBase, 0777, true);
         console.log("app base not exists,make one," + appBase);
     }
     if (!fs.existsSync(appBase)) {
