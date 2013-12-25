@@ -17,9 +17,15 @@ var RoomSchema = new Schema({
 
 var isInRoom = function (target, room) {
     return room.users.some(function (user) {
-        return user.equals(target._id);
+        return user.equals(target._id); 
     })
-}
+};
+
+RoomSchema.methods.ifHaveUser = function(target, cb) {
+    return this.users.some(function(user) {
+        return user.equals(target._id);
+    });
+};
 
 RoomSchema.methods.joinUser = function (newUser, cb) {
     if (isInRoom(newUser, this)) {
