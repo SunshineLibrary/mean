@@ -18,6 +18,8 @@ var env = process.env.NODE_ENV = process.env.NODE_ENV || 'development',
     auth = require('./config/middlewares/authorization'),
     mongoose = require('mongoose');
 
+var applications = require('./app/controllers/applications');
+
 //Bootstrap db connection
 var db = mongoose.connect(config.db);
 
@@ -53,6 +55,9 @@ require('./config/routes')(app, passport, auth);
 var port = process.env.PORT || config.port;
 app.listen(port);
 console.log('Express app started on port ' + port);
+
+//send the sync request
+applications.syncFromUpstream();
 
 //Initializing logger
 logger.init(app, passport, mongoose);

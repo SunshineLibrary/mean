@@ -19,6 +19,21 @@ var APP_BASE = 'data/app'
     , AM = require('../services/am')
     , am = AM.init(APP_BASE, DOWNLOAD_BASE);
 
+var inspect = require('util').inspect;
+var upstreamServer = '';  //http://localhost:4000
+
+var http = require('http');
+var fs = require('fs');
+
+var _ = require('underscore');
+var _str = require('underscore.string');
+_.mixin(_str.exports());
+
+var temp = require('temp');
+temp.track();
+
+var request = require('request');
+
 exports.all = function (req, res) {
     var filters = req.query
         , fields = (filters.fields) ? _.words(filters.fields, ",") : undefined
@@ -98,4 +113,194 @@ exports.app = function (req, res, next, id) {
     } else {
         return next(new Error('Failed to load app ' + id));
     }
+};
+
+exports.sync = function(req, res) {
+    console.log('post sync...');  
+    var filters = req.query
+        , fields = (filters.fields) ? _.words(filters.fields, ",") : undefined
+        , result;
+    if (req.query) {
+        result = am.query(filters);
+        delete filters.fields;
+    } else {
+        result = am.all();
+    }
+    if (fields) {
+        result = _.map(result, function (app) {
+            var filtered = {};
+            _.each(fields, function (field) {
+                filtered[field] = app[field];
+            })
+            return filtered;
+        });
+    }
+    res.send(result);
+};
+
+//-------------------------------------------------------downstream-----------------------------------------------------------
+exports.syncFromUpstream = function(req, res) {
+    sync();
+};
+
+var sync = function() {
+    setTimeout(function() {
+console.log('start sync...');
+        fetchUpstreamDiff(function(err, diff) {
+            if(err) {
+                res.send(500, {msg: err});
+                return;
+            }
+console.log('get diff successfully，begin parse...diff.lenght='+diff.newApps.length);
+
+            _.each(diff.newApps, function (app) {
+                if (!_(app.download_url).startsWith('http://')) {
+                    app.download_url = upstreamServer + app.download_url;
+                }
+                console.log('download new app,%s,%s', app.download_url);
+                downloadFile(app.download_url, function (err, file) {
+                    if (err) {
+                        console.error('download failed,%s', err);
+                        return;
+                    }
+                    am.install(file, function (app) {
+                        console.log('new app installed,%s', ((app) ? app.id : 'null'));
+                    });
+                });
+            });
+
+            _.each(diff.updateApps, function (app) {
+                console.log('update app,%s', JSON.stringify(app));
+                if (!_(app.download_url).startsWith('http://')) {
+                    app.download_url = upstreamServer + app.download_url;
+                }
+                var info = temp.openSync('turtledl_');
+                console.log('download update app,%s,%s', app.download_url, info.path);
+
+                downloadFile(app.download_url, function (err, file) {
+                    console.log('ready to install zip,%s,%s,', err, file);
+                    if (err) {
+                        console.error('download failed,%s', err);
+                        return;
+                    }
+
+                    am.install(file, function (app) {
+                        console.log('new app installed,%s', ((app) ? app.id : 'null'));
+                    });
+                });
+            });
+
+            _.each(diff.deleteApps, function (app) {
+                console.log('delete app,%s', JSON.stringify(app));
+                am.uninstall(app.id, function (app) {
+                    console.log('app deleted,%s', app.id);
+                });
+            });
+
+            console.log('sync over...');
+        });    
+    }, 2000);
+};
+
+var fetchUpstreamDiff = function (cb) {
+    if (!cb) {
+        return;
+    }
+console.log("get all apps...");
+
+    var options = {
+       url: "http://localhost:4000/sync",
+       method: 'post',
+       json: {method: 'mirror'}
+    };
+
+    request(options, function (error, response, body) {
+console.log('get response...');
+        if (!error && response.statusCode == 200) {
+            var diff = {
+                isModified: false,
+                newApps: [],
+                deleteApps: [],
+                updateApps: []
+            };
+            var localApps = am.all();
+
+
+console.log(inspect(body));
+           // var newApps = _.indexBy(JSON.parse(body), 'id');
+            var newApps = _.indexBy(body, 'id');
+
+            _.each(localApps, function (localApp) {
+                if (!newApps[localApp.id]) {
+                    diff.deleteApps.push(localApp);
+                    diff.isModified = true;
+                } else if (newApps[localApp.id].version_code > localApp.version_code) {
+                    diff.updateApps.push(newApps[localApp.id]);
+                    diff.isModified = true;
+                }
+                delete newApps[localApp.id];
+            });
+
+            _.each(newApps, function (newApp) {
+                diff.newApps.push(newApp);
+                diff.isModified = true;
+            });
+            console.log('parse apps over，return parsed diff...');
+            cb(undefined, diff);
+        } else {
+            console.log('get apps failed...');
+            cb(error, undefined);
+        }
+    });
+};
+/*
+download new app,http://localhost:4000/data/dl/0.3.wpk,%s
+download new app,http://localhost:4000/data/dl/101.20.wpk,%s
+download new app,http://localhost:4000/data/dl/102.8.wpk,%s
+同步完毕...
+begin downloading,http://localhost:4000/data/dl/0.3.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
+file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab,http://localhost:4000/data/dl/0.3.wpk
+begin downloading,http://localhost:4000/data/dl/101.20.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm
+file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm,http://localhost:4000/data/dl/101.20.wpk
+begin downloading,http://localhost:4000/data/dl/102.8.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir
+file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir,http://localhost:4000/data/dl/102.8.wpk
+file write finish
+install zip,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
+
+/home/hellmagic/sync/downupstream/node_modules/adm-zip/zipFile.js:66
+            throw Utils.Errors.INVALID_FORMAT;
+                              ^
+Invalid or unsupported zip format. No END header found
+
+*/
+var downloadFile = function (url, cb) {
+    var dstFile = temp.path({prefix: 'turtledl_'});
+    http.get(url,function (res) {
+        console.log("begin downloading,%s,%s", url, dstFile);
+        var writeStream = fs.createWriteStream(dstFile);
+        writeStream.on('finish', function () {
+            console.log('file write finish');
+            if (cb) cb(undefined, dstFile);
+        });
+        writeStream.on('end', function () {
+            console.log('file write end');
+        });
+        writeStream.on('close', function () {
+            console.log('file write close');
+        });
+        res.on('data', function (data) {
+            writeStream.write(data);
+        })
+            .on('end', function () {
+                console.log('file download completed,%s,%s', dstFile, url);
+                writeStream.end();
+            })
+            .on('error', function (e) {
+                console.error('download error,%s', url);
+                writeStream.end();
+                if (cb) cb(e);
+            });
+    }).on('error', function (e) {
+            if (cb) cb(e);
+        });
 };

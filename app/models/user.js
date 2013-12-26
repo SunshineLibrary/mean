@@ -26,7 +26,6 @@ var UserSchema = new Schema({
     google: {}
 });
 
-module.exports = UserSchema;
 
 /**
  * Virtuals

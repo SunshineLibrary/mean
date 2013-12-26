@@ -24,6 +24,14 @@ exports.init = function (appBase, downloadBase) {
         throw "cannot create app base," + appBase;
     }
 
+    if (!fs.existsSync(downloadBase)) {
+        fs.mkdirSync(downloadBase, 0777, true);
+        console.log("downloadBase not exists,make one," + appBase);
+    }
+    if (!fs.existsSync(downloadBase)) {
+        throw "cannot create downloadBase" + downloadBase;
+    }
+
     var getAppFolder = function (id) {
         return path.join(appBase, id);
     }
