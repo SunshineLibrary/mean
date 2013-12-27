@@ -56,9 +56,6 @@ var port = process.env.PORT || config.port;
 app.listen(port);
 console.log('Express app started on port ' + port);
 
-//send the sync request
-applications.syncFromUpstream();
-
 //Initializing logger
 logger.init(app, passport, mongoose);
 

@@ -115,8 +115,8 @@ exports.app = function (req, res, next, id) {
     }
 };
 
-exports.sync = function(req, res) {
-    console.log('post sync...');  
+exports.sync = function (req, res) {
+    console.log('post sync...');
     var filters = req.query
         , fields = (filters.fields) ? _.words(filters.fields, ",") : undefined
         , result;
@@ -139,83 +139,77 @@ exports.sync = function(req, res) {
 };
 
 //-------------------------------------------------------downstream-----------------------------------------------------------
-exports.syncFromUpstream = function(req, res) {
-    sync();
-};
+exports.sync = function (req, res) {
+    var upstreamServer = req.body.server,
+        policy = req.body.policy;
+    console.log('sync param:%s,%s', upstreamServer, policy);
 
-var sync = function() {
-    setTimeout(function() {
-console.log('start sync...');
-        fetchUpstreamDiff(function(err, diff) {
-            if(err) {
-                res.send(500, {msg: err});
-                return;
+    fetchUpstreamDiff({
+        url: upstreamServer
+    }, function (err, diff) {
+        if (err) {
+            res.send(500, {msg: err});
+            return;
+        }
+        console.log('get diff successfully，begin parse...diff.lenght=' + diff.newApps.length);
+
+        _.each(diff.newApps, function (app) {
+            if (!_(app.download_url).startsWith('http://')) {
+                app.download_url = upstreamServer + app.download_url;
             }
-console.log('get diff successfully，begin parse...diff.lenght='+diff.newApps.length);
-
-            _.each(diff.newApps, function (app) {
-                if (!_(app.download_url).startsWith('http://')) {
-                    app.download_url = upstreamServer + app.download_url;
+            console.log('download new app,%s', app.download_url);
+            downloadFile(app.download_url, function (err, file) {
+                if (err) {
+                    console.error('download failed,%s', err);
+                    return;
                 }
-                console.log('download new app,%s,%s', app.download_url);
-                downloadFile(app.download_url, function (err, file) {
-                    if (err) {
-                        console.error('download failed,%s', err);
-                        return;
-                    }
-                    am.install(file, function (app) {
-                        console.log('new app installed,%s', ((app) ? app.id : 'null'));
-                    });
+                am.install(file, function (app) {
+                    console.log('new app installed,%s', ((app) ? app.id : 'null'));
                 });
             });
+        });
 
-            _.each(diff.updateApps, function (app) {
-                console.log('update app,%s', JSON.stringify(app));
-                if (!_(app.download_url).startsWith('http://')) {
-                    app.download_url = upstreamServer + app.download_url;
+        _.each(diff.updateApps, function (app) {
+            console.log('update app,%s', JSON.stringify(app));
+            if (!_(app.download_url).startsWith('http://')) {
+                app.download_url = upstreamServer + app.download_url;
+            }
+            var info = temp.openSync('turtledl_');
+            console.log('download update app,%s,%s', app.download_url, info.path);
+
+            downloadFile(app.download_url, function (err, file) {
+                console.log('ready to install zip,%s,%s,', err, file);
+                if (err) {
+                    console.error('download failed,%s', err);
+                    return;
                 }
-                var info = temp.openSync('turtledl_');
-                console.log('download update app,%s,%s', app.download_url, info.path);
 
-                downloadFile(app.download_url, function (err, file) {
-                    console.log('ready to install zip,%s,%s,', err, file);
-                    if (err) {
-                        console.error('download failed,%s', err);
-                        return;
-                    }
-
-                    am.install(file, function (app) {
-                        console.log('new app installed,%s', ((app) ? app.id : 'null'));
-                    });
+                am.install(file, function (app) {
+                    console.log('new app installed,%s', ((app) ? app.id : 'null'));
                 });
             });
+        });
 
-            _.each(diff.deleteApps, function (app) {
-                console.log('delete app,%s', JSON.stringify(app));
-                am.uninstall(app.id, function (app) {
-                    console.log('app deleted,%s', app.id);
-                });
+        _.each(diff.deleteApps, function (app) {
+            console.log('delete app,%s', JSON.stringify(app));
+            am.uninstall(app.id, function (app) {
+                console.log('app deleted,%s', app.id);
             });
+        });
 
-            console.log('sync over...');
-        });    
-    }, 2000);
+        console.log('sync over...');
+    });
 };
 
-var fetchUpstreamDiff = function (cb) {
+var fetchUpstreamDiff = function (options, cb) {
     if (!cb) {
+        console.log('need a callback');
         return;
     }
-console.log("get all apps...");
 
-    var options = {
-       url: "http://localhost:4000/sync",
-       method: 'post',
-       json: {method: 'mirror'}
-    };
-
+    options.url = options.url + "/apps";
+    options.json = true;
     request(options, function (error, response, body) {
-console.log('get response...');
         if (!error && response.statusCode == 200) {
             var diff = {
                 isModified: false,
@@ -224,10 +218,6 @@ console.log('get response...');
                 updateApps: []
             };
             var localApps = am.all();
-
-
-console.log(inspect(body));
-           // var newApps = _.indexBy(JSON.parse(body), 'id');
             var newApps = _.indexBy(body, 'id');
 
             _.each(localApps, function (localApp) {
@@ -254,29 +244,29 @@ console.log(inspect(body));
     });
 };
 /*
-download new app,http://localhost:4000/data/dl/0.3.wpk,%s
-download new app,http://localhost:4000/data/dl/101.20.wpk,%s
-download new app,http://localhost:4000/data/dl/102.8.wpk,%s
-同步完毕...
-begin downloading,http://localhost:4000/data/dl/0.3.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
-file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab,http://localhost:4000/data/dl/0.3.wpk
-begin downloading,http://localhost:4000/data/dl/101.20.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm
-file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm,http://localhost:4000/data/dl/101.20.wpk
-begin downloading,http://localhost:4000/data/dl/102.8.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir
-file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir,http://localhost:4000/data/dl/102.8.wpk
-file write finish
-install zip,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
+ download new app,http://localhost:4000/data/dl/0.3.wpk,%s
+ download new app,http://localhost:4000/data/dl/101.20.wpk,%s
+ download new app,http://localhost:4000/data/dl/102.8.wpk,%s
+ 同步完毕...
+ begin downloading,http://localhost:4000/data/dl/0.3.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
+ file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab,http://localhost:4000/data/dl/0.3.wpk
+ begin downloading,http://localhost:4000/data/dl/101.20.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm
+ file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm,http://localhost:4000/data/dl/101.20.wpk
+ begin downloading,http://localhost:4000/data/dl/102.8.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir
+ file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir,http://localhost:4000/data/dl/102.8.wpk
+ file write finish
+ install zip,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
 
-/home/hellmagic/sync/downupstream/node_modules/adm-zip/zipFile.js:66
-            throw Utils.Errors.INVALID_FORMAT;
-                              ^
-Invalid or unsupported zip format. No END header found
+ /home/hellmagic/sync/downupstream/node_modules/adm-zip/zipFile.js:66
+ throw Utils.Errors.INVALID_FORMAT;
+ ^
+ Invalid or unsupported zip format. No END header found
 
-*/
+ */
 var downloadFile = function (url, cb) {
     var dstFile = temp.path({prefix: 'turtledl_'});
+    console.log("begin downloading,%s,%s", url, dstFile);
     http.get(url,function (res) {
-        console.log("begin downloading,%s,%s", url, dstFile);
         var writeStream = fs.createWriteStream(dstFile);
         writeStream.on('finish', function () {
             console.log('file write finish');

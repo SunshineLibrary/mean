@@ -33,6 +33,8 @@ module.exports = function (app, passport, auth) {
     app.get('/userdata/:appId/:entityId', auth.requiresLogin, userdata.read);
     app.post('/userdata/:appId/:entityId', auth.requiresLogin, userdata.write);
 
+    app.post('/sync', applications.sync);
+
     //Setting the local strategy route
     app.post('/users/session', passport.authenticate('local', {
         failureRedirect: '/signin',
