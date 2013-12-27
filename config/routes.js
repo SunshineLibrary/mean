@@ -1,6 +1,6 @@
 var express = require("express");
 
-module.exports = function(app, passport, auth) {
+module.exports = function (app, passport, auth) {
     //User Routes
     var applications = require('../app/controllers/applications');
     var userdata = require('../app/controllers/userdata');
@@ -29,6 +29,9 @@ module.exports = function(app, passport, auth) {
     app.get('/apps', applications.all);
     app.post('/apps', applications.install);
     app.del('/apps/:appId', applications.uninstall);
+
+    app.get('/userdata/:appId/:entityId', auth.requiresLogin, userdata.read);
+    app.post('/userdata/:appId/:entityId', auth.requiresLogin, userdata.write);
 
     //Setting the local strategy route
     app.post('/users/session', passport.authenticate('local', {
@@ -81,6 +84,7 @@ module.exports = function(app, passport, auth) {
     app.param('userId', users.user);
     app.param('roomId', rooms.room);
     app.param('appId', applications.app);
+//    app.param('entityId', );
 
     //Article Routes
     var articles = require('../app/controllers/articles');

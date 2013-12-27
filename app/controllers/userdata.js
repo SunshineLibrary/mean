@@ -18,16 +18,29 @@ var UDM = require('../services/udm')
     , USERDATA_BASE = 'data/userdata'
     , udm = UDM.init(USERDATA_BASE)
 
+/**
+ * ISSUE
+ * https://github.com/SunshineLibrary/turtle-public/issues/3
+ */
 exports.read = function (req, res) {
     var username = req.session.user.username;
     console.log("get userdata:%s", username);
-    var result = udm.getData(username, req.path);
-    res.send(result || {});
+    if (username) {
+        var result = udm.getData(username, req.params.appId + req.params.entityId);
+        res.send(result || {});
+    } else {
+        res.send(401);
+    }
 };
 
 exports.write = function (req, res) {
     var username = req.session.user.username;
     console.log("post userdata:%s", username);
-    var result = udm.putData(username, req.path, JSON.stringify(req.body));
+    if (username) {
+        var result = udm.putData(username, req.params.appId + req.params.entityId, JSON.stringify(req.body));
+        res.send(result || {});
+    } else {
+        res.send(401);
+    }
     res.send(result);
 };
