@@ -211,7 +211,16 @@ describe('The Method For App In Room', function() {
       });
    });
 
-
+   after(function(done) {
+        Room.remove().exec(function(err) {
+            if(err) return done(err);
+            App.remove().exec(function(err) {
+                if(err) return done(err);
+                console.log('Remove All....');
+                done();
+            })
+        })
+   })
 });
 
 

@@ -49,16 +49,15 @@ RoomSchema.methods.exitUser = function (exitUser, cb) {
 };
 
 RoomSchema.methods.isAsigned = function(target) {
-    return this.apps.some(function(app) {
-        return (app.appId == target.appId);
+    return this.apps.some(function (app) {
+        return app.equals(target._id); 
     })
 };
 
 var isAsigned = function(target, room) {
-    return room.apps.some(function(app) {
-        console.log('app.appId='+app.appId+"   target.appId="+target.appId+'name='+app.name);
-        return (app.appId == target.appId);
-    })    
+    return room.apps.some(function (app) {
+        return app.equals(target._id); 
+    })
 };
 
 RoomSchema.methods.addApp = function(newApp, cb) {
