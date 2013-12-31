@@ -18,8 +18,6 @@ var env = process.env.NODE_ENV = process.env.NODE_ENV || 'development',
     auth = require('./config/middlewares/authorization'),
     mongoose = require('mongoose');
 
-var applications = require('./app/controllers/applications');
-
 //Bootstrap db connection
 var db = mongoose.connect(config.db);
 
@@ -39,6 +37,8 @@ var walk = function(path) {
     });
 };
 walk(models_path);
+
+var applications = require('./app/controllers/applications');
 
 //bootstrap passport config
 require('./config/passport')(passport);

@@ -12,6 +12,9 @@ var RoomSchema = new Schema({
     name: String,
     users: [
         { type: ObjectId, ref: 'User' }
+    ],
+    apps: [
+        { type: ObjectId, ref: 'App'}
     ]
 });
 
@@ -45,4 +48,45 @@ RoomSchema.methods.exitUser = function (exitUser, cb) {
     }
 };
 
+RoomSchema.methods.isAsigned = function(target) {
+    return this.apps.some(function (app) {
+        return app.equals(target._id); 
+    })
+};
+
+var isAsigned = function(target, room) {
+    return room.apps.some(function (app) {
+        return app.equals(target._id); 
+    })
+};
+
+RoomSchema.methods.addApp = function(newApp, cb) {
+    if(!cb) return new Error('No Callback Function');
+    if(!isAsigned(newApp, this)) {
+        this.apps.push(newApp);
+        this.save(cb);
+    } else {
+        cb(null, this);
+    }
+};
+
+RoomSchema.methods.removeApp = function(exitApp, cb) {
+    if(!cb) return new Error('No Callback Function');
+    if(!isAsigned(exitApp, this)) return new Error('The App is not exist');
+    if(isAsigned(exitApp, this)) {
+        this.apps.remove(exitApp);
+        this.save(cb);
+    } else {
+        cb(null, this);
+    }
+};
+
+
 var Room = mongoose.model('Room', RoomSchema);
+
+
+
+
+
+
+

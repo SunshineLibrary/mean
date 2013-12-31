@@ -53,7 +53,8 @@
     "base32": "0.0.5",
     "temp": "0.x",
     "node-fs": "0.1.7",
-    "should": "~2.1.1"
+    "should": "~2.1.1",
+    "cloneextend": "0.0.3"
   },
   "devDependencies": {
     "supertest": "latest",

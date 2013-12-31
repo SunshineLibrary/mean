@@ -13,6 +13,13 @@ var _ = require("underscore")
 
 _.mixin(_str.exports());
 
+var mongoose = require('mongoose');
+var App = mongoose.model('App');
+var Room = mongoose.model('Room');
+var ce = require('cloneextend');  
+
+var inspect = require('util').inspect;
+
 exports.init = function (appBase, downloadBase) {
     console.log("init app manager,%s,%s", appBase, downloadBase);
     var apps = {};
@@ -71,7 +78,7 @@ exports.init = function (appBase, downloadBase) {
         return app;
     }
 
-    // init all exists apps
+    // init all exists apps and sync the database
     var files = fs.readdirSync(appBase);
     _.each(files, function (file) {
         if (_(file).startsWith(".")) {
@@ -88,6 +95,25 @@ exports.init = function (appBase, downloadBase) {
             });
         }
         console.log('app loaded,%s', JSON.stringify(app));
+    });
+
+    //sync the database
+    App.remove().exec(function(err) {
+        if(err) return console.log('Before Insert, Remove all error: '+JSON.stringify(err));
+        Object.keys(apps).forEach(function(appId) {
+            var app = apps[appId];
+            console.log('app.id='+app.id);
+            var tmpApp = ce.clone(app);
+
+            tmpApp.appId = tmpApp.id;
+            delete tmpApp.id;
+         
+            var saveApp = new App(tmpApp);
+            saveApp.save(function(err, mapp) {
+                if(err) return console.log('Init Error:  '+JSON.stringify(err));
+                console.log('Init:  '+ mapp.appId + '---' + mapp.name);
+            });
+        }); 
     });
 
     var installFolder = function (dirPath, cb) {
@@ -118,6 +144,18 @@ exports.init = function (appBase, downloadBase) {
                 packApp(appFolder, fstream.Writer(appFile), function (bytes) {
                     console.log('app file generated,%s,%s bytes', appFile, bytes);
                     apps[newApp.id] = newApp;
+
+                    console.log('app.id='+newApp.id);
+                    var tmpApp = ce.clone(newApp);
+
+                    tmpApp.appId = tmpApp.id;
+                    delete tmpApp.id;
+
+                    var saveApp = new App(tmpApp);
+                    saveApp.save(function(err, mapp) {
+                        if(err) return console.log('instll folder: Update database failed....'+JSON.stringify(err));
+                        console.log('Update：'+mapp.appId+'---'+mapp.name);
+                    });
                     if (cb) cb(newApp);
                 });
             });
@@ -132,6 +170,15 @@ exports.init = function (appBase, downloadBase) {
                     packApp(appFolder, fstream.Writer(appFile), function (bytes) {
                         console.log('app file generated,%s,%s bytes', appFile, bytes);
                         apps[newApp.id] = newApp;
+
+                        App.remove({appId: newApp.id}).exec(function(err) {
+                            if(err) return console.log('Update Remove failed...');
+                            var tmpApp = new App(newApp);
+                            tmpApp.save(function(err, mapp) {
+                                if(err) return console.log('Update Save failed...');
+                                console.log('Update Save app'+mapp.appId+'---'+mapp.name);
+                            });
+                        });
                         if (cb) cb(newApp);
                     });
                 });
@@ -153,11 +200,49 @@ exports.init = function (appBase, downloadBase) {
         installFolder(dirPath, cb);
     };
 
+
+    var findRoomsByAppId = function(appId, cb) {
+        if(!cb) return new Error('No Callback Function Found');
+        App.findAppByAppId(appId, function(err, app) {
+            if(err) return cb(err, null, null);
+            console.log('Get app...');
+            Room.find({ apps: {   //
+                $in: [app._id]
+            }}).exec(function(err, rooms) {
+                if(err) return cb(err, null, null);
+                console.log('Get rooms，rooms.length='+rooms.length);
+                cb(null, rooms, app);
+            });
+        });
+    };
+
     var uninstall = function (appId, cb) {
         console.log('uninstall,%s', appId);
         var exists = apps[appId];
         if (typeof exists != 'undefined') {
+
+            //sync the database
+            findRoomsByAppId(appId, function(err, rooms, app) {
+                if(err) return console.log('Server Uninstll Error:  '+JSON.stringify(err));
+                rooms.forEach(function(room, index) {
+                    console.log('Before remove, length='+room.apps.length);
+                    room.apps.remove(app);
+                    room.save(function(err) {
+                        if(err) return console.log('Server Uninstall Error--room save:  '+JSON.stringify(err));
+                        console.log('After remove, length='+room.apps.length);
+                    });
+
+                    if(index == (rooms.length-1)) {
+                        App.remove({appId: appId}).exec(function(err) {
+                            if(err) return console.log('Server Uninstll Error--remove app:  '+JSON.stringify(err));
+                            console.log('Uninstll Successfully');
+                        });
+                    }
+                });
+            });
+
             delete apps[appId];
+
             fsext.remove(getAppFolder(appId), function () {
                 if (cb) cb(exists);
             });

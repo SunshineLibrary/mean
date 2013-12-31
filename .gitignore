@@ -5,3 +5,5 @@ node_modules/
 public/lib
 test/coverage/
 app/*
+*.log
+data/

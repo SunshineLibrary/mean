@@ -6,6 +6,8 @@ module.exports = function (app, passport, auth) {
     var userdata = require('../app/controllers/userdata');
     var users = require('../app/controllers/users');
     var rooms = require('../app/controllers/rooms');
+    var apps = require('../app/controllers/apps');
+
     app.get('/signin', users.signin);
     app.get('/signup', users.signup);
     app.get('/signout', users.signout);
@@ -29,6 +31,12 @@ module.exports = function (app, passport, auth) {
     app.get('/apps', applications.all);
     app.post('/apps', applications.install);
     app.del('/apps/:appId', applications.uninstall);
+
+    app.get('/apps/:appId', apps.show);
+    app.get('/apps/:appId/rooms', apps.rooms);
+    app.get('rooms/:roomId/apps', rooms.apps);
+    app.post('/rooms/:roomId/apps', rooms.addApp);
+    app.del('/rooms/:roomId/apps/:appId', rooms.removeApp);
 
     app.get('/userdata/:appId/:entityId', auth.requiresLogin, userdata.read);
     app.post('/userdata/:appId/:entityId', auth.requiresLogin, userdata.write);
