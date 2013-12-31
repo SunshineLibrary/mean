@@ -23,6 +23,7 @@ var UDM = require('../services/udm')
  * https://github.com/SunshineLibrary/turtle-public/issues/3
  */
 exports.read = function (req, res) {
+    // assume that already logged in
     var username = req.session.user.username;
     console.log("get userdata:%s", username);
     if (username) {
@@ -34,6 +35,7 @@ exports.read = function (req, res) {
 };
 
 exports.write = function (req, res) {
+    // assume that already logged in
     var username = req.session.user.username;
     console.log("post userdata:%s", username);
     if (username) {

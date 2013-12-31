@@ -1,18 +1,5 @@
 /**
- * AppmanController
- *
- * @module      :: Controller
- * @description    :: A set of functions called `actions`.
- *
- *                 Actions contain code telling Sails how to respond to a certain type of request.
- *                 (i.e. do stuff, then send some JSON, show an HTML page, or redirect to another URL)
- *
- *                 You can configure the blueprint URLs which trigger these actions (`config/controllers.js`)
- *                 and/or override them with custom routes (`config/routes.js`)
- *
- *                 NOTE: The code you write here supports both HTTP and Socket.io automatically.
- *
- * @docs        :: http://sailsjs.org/#!documentation/controllers
+ * ApplicationController
  */
 var APP_BASE = 'data/app'
     , DOWNLOAD_BASE = 'data/dl'
@@ -20,7 +7,6 @@ var APP_BASE = 'data/app'
     , am = AM.init(APP_BASE, DOWNLOAD_BASE);
 
 var inspect = require('util').inspect;
-var upstreamServer = '';  //http://localhost:4000
 
 var http = require('http');
 var fs = require('fs');
@@ -115,30 +101,6 @@ exports.app = function (req, res, next, id) {
     }
 };
 
-exports.sync = function (req, res) {
-    console.log('post sync...');
-    var filters = req.query
-        , fields = (filters.fields) ? _.words(filters.fields, ",") : undefined
-        , result;
-    if (req.query) {
-        result = am.query(filters);
-        delete filters.fields;
-    } else {
-        result = am.all();
-    }
-    if (fields) {
-        result = _.map(result, function (app) {
-            var filtered = {};
-            _.each(fields, function (field) {
-                filtered[field] = app[field];
-            })
-            return filtered;
-        });
-    }
-    res.send(result);
-};
-
-//-------------------------------------------------------downstream-----------------------------------------------------------
 exports.sync = function (req, res) {
     var upstreamServer = req.body.server,
         policy = req.body.policy;
@@ -243,26 +205,7 @@ var fetchUpstreamDiff = function (options, cb) {
         }
     });
 };
-/*
- download new app,http://localhost:4000/data/dl/0.3.wpk,%s
- download new app,http://localhost:4000/data/dl/101.20.wpk,%s
- download new app,http://localhost:4000/data/dl/102.8.wpk,%s
- 同步完毕...
- begin downloading,http://localhost:4000/data/dl/0.3.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
- file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab,http://localhost:4000/data/dl/0.3.wpk
- begin downloading,http://localhost:4000/data/dl/101.20.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm
- file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-zhi0tm,http://localhost:4000/data/dl/101.20.wpk
- begin downloading,http://localhost:4000/data/dl/102.8.wpk,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir
- file download completed,/home/hellmagic/tmp/turtledl_1131126-7295-f5jjir,http://localhost:4000/data/dl/102.8.wpk
- file write finish
- install zip,/home/hellmagic/tmp/turtledl_1131126-7295-1c1x2ab
 
- /home/hellmagic/sync/downupstream/node_modules/adm-zip/zipFile.js:66
- throw Utils.Errors.INVALID_FORMAT;
- ^
- Invalid or unsupported zip format. No END header found
-
- */
 var downloadFile = function (url, cb) {
     var dstFile = temp.path({prefix: 'turtledl_'});
     console.log("begin downloading,%s,%s", url, dstFile);
