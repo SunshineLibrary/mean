@@ -108,9 +108,16 @@ exports.apps = function (req, res) {
 
 exports.removeApp = function (req, res) {
     if (req.room && req.app) {
-        req.room.removeApp(req.app, function (err, room) {
-            if (err) return res.json(500);
-            res.json(room);
+        App.findAppByAppId(req.app.id, function(err, app) {
+            if(err) {
+                console.log('Server Error---rooms.removeApp'+JSON.stringify(err));
+                return res.json(500, err);
+            }
+
+            req.room.removeApp(app, function (err, room) {
+                if (err) return res.json(500, err);
+                res.json(room);
+            });
         });
     } else {
         if(!req.room) {
