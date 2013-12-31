@@ -13,6 +13,16 @@ var _ = require("underscore")
 
 _.mixin(_str.exports());
 
+var mongoose = require('mongoose');
+var App = mongoose.model('App');
+var Room = mongoose.model('Room');
+var ce = require('cloneextend');  
+
+var inspect = require('util').inspect;
+//var o1={a:'a',d:new Date(),n:1,ar:[1,2,3]};
+//var o2=ce.clone(o1); //now o2 will hold a copy of o1
+//console.log(o2);
+
 exports.init = function (appBase, downloadBase) {
     console.log("init app manager,%s,%s", appBase, downloadBase);
     var apps = {};
@@ -71,7 +81,7 @@ exports.init = function (appBase, downloadBase) {
         return app;
     }
 
-    // init all exists apps
+    // init all exists apps and sync the database
     var files = fs.readdirSync(appBase);
     _.each(files, function (file) {
         if (_(file).startsWith(".")) {
@@ -88,6 +98,26 @@ exports.init = function (appBase, downloadBase) {
             });
         }
         console.log('app loaded,%s', JSON.stringify(app));
+    });
+
+    //sync the database
+    App.remove().exec(function(err) {
+        if(err) return console.log('Before Insert, Remove all error: '+JSON.stringify(err));
+        Object.keys(apps).forEach(function(appId) {
+            var app = apps[appId];
+            console.log('app.id='+app.id);
+            var tmpApp = ce.clone(app);
+            console.log('克隆:  '+ inspect(tmpApp));
+
+            tmpApp.appId = tmpApp.id;
+            delete tmpApp.id;
+         
+            var saveApp = new App(tmpApp);
+            saveApp.save(function(err, mapp) {
+                if(err) return console.log('Init Error:  '+JSON.stringify(err));
+                console.log('Init:  '+ mapp.appId + '---' + mapp.name);
+            });
+        }); 
     });
 
     var installFolder = function (dirPath, cb) {
@@ -118,6 +148,18 @@ exports.init = function (appBase, downloadBase) {
                 packApp(appFolder, fstream.Writer(appFile), function (bytes) {
                     console.log('app file generated,%s,%s bytes', appFile, bytes);
                     apps[newApp.id] = newApp;
+
+                    console.log('app.id='+newApp.id);
+                    var tmpApp = ce.clone(newApp);
+
+                    tmpApp.appId = tmpApp.id;
+                    delete tmpApp.id;
+
+                    var saveApp = new App(tmpApp);
+                    saveApp.save(function(err, mapp) {
+                        if(err) return console.log('instll folder更新数据库失败....'+JSON.stringify(err));
+                        console.log('更新成功：'+mapp.appId+'---'+mapp.name);
+                    })
                     if (cb) cb(newApp);
                 });
             });
@@ -132,6 +174,15 @@ exports.init = function (appBase, downloadBase) {
                     packApp(appFolder, fstream.Writer(appFile), function (bytes) {
                         console.log('app file generated,%s,%s bytes', appFile, bytes);
                         apps[newApp.id] = newApp;
+
+                        App.remove({appId: newApp.id}).exec(function(err) {
+                            if(err) return console.log('Update Remove failed...');
+                            var tmpApp = new App(newApp);
+                            tmpApp.save(function(err, mapp) {
+                                if(err) return console.log('Update Save failed...');
+                                console.log('Update Save app'+mapp.appId+'---'+mapp.name);
+                            });
+                        });
                         if (cb) cb(newApp);
                     });
                 });
@@ -153,11 +204,51 @@ exports.init = function (appBase, downloadBase) {
         installFolder(dirPath, cb);
     };
 
+
+    var findRoomsByAppId = function(appId, cb) {
+        if(!cb) return new Error('No Callback Function Found');
+        App.findAppByAppId(appId, function(err, app) {
+            if(err) return cb(err, null, null);
+            console.log('先找到app...');
+            Room.find({ apps: {   //
+                $in: [app._id]
+            }}).exec(function(err, rooms) {
+                if(err) return cb(err, null, null);
+                console.log('再找到rooms，rooms.length='+rooms.length);
+                cb(null, rooms, app);
+            });
+        });
+    };
+
     var uninstall = function (appId, cb) {
         console.log('uninstall,%s', appId);
         var exists = apps[appId];
         if (typeof exists != 'undefined') {
+
+            //sync the database
+            findRoomsByAppId(appId, function(err, rooms, app) {
+                if(err) return console.log('Server Uninstll Error:  '+JSON.stringify(err));
+                rooms.forEach(function(room, index) {
+                    console.log('移除前, length='+room.apps.length);
+                    room.apps.remove(app);
+                    room.save(function(err) {
+                        if(err) return console.log('Server Uninstall Error--room save:  '+JSON.stringify(err));
+                        console.log('移除后, length='+room.apps.length);
+                    });
+
+console.log('index='+index+'   length='+rooms.length);
+                    if(index == (rooms.length-1)) {
+                        console.log('将要从App中移除。。。');
+                        App.remove({appId: appId}).exec(function(err) {
+                            if(err) return console.log('Server Uninstll Error--remove app:  '+JSON.stringify(err));
+                            console.log('移除更新App成功');
+                        });
+                    }
+                });
+            });
+
             delete apps[appId];
+
             fsext.remove(getAppFolder(appId), function () {
                 if (cb) cb(exists);
             });

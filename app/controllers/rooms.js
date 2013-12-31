@@ -3,7 +3,8 @@
  */
 var mongoose = require('mongoose'),
     User = mongoose.model('User'),
-    Room = mongoose.model('Room');
+    Room = mongoose.model('Room'),
+    App = mongoose.model('App');
 
 /**
  * Create user
@@ -96,3 +97,73 @@ exports.room = function (req, res, next, id) {
             next();
         });
 };
+
+exports.apps = function (req, res) {
+    if (req.room) {
+        res.json(req.room.apps);
+    } else {
+        res.json(404);
+    }
+};
+
+exports.removeApp = function (req, res) {
+    if (req.room && req.app) {
+        req.room.removeApp(req.app, function (err, room) {
+            if (err) return res.json(500);
+            res.json(room);
+        });
+    } else {
+        if(!req.room) {
+            console.log('Not Found room...');
+        }
+        if(!req.app) {
+            console.log('Not Found app...');
+        }
+        return res.json(404);
+    }
+};
+
+exports.addApp = function(req, res) {
+    if(!req.room) return res.json(404);
+    console.log('appId:  '+req.body.appId);
+    App.findAppByAppId(req.body.appId, function(err, app) {
+        if(err) return res.json(500, err);
+        if(app) {
+            req.room.addApp(app, function(err, room) {
+                if(err) return res.json(500);
+                res.json(room);
+            });
+        } else {
+            res.json(404);
+        }
+    })
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
