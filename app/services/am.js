@@ -19,9 +19,6 @@ var Room = mongoose.model('Room');
 var ce = require('cloneextend');  
 
 var inspect = require('util').inspect;
-//var o1={a:'a',d:new Date(),n:1,ar:[1,2,3]};
-//var o2=ce.clone(o1); //now o2 will hold a copy of o1
-//console.log(o2);
 
 exports.init = function (appBase, downloadBase) {
     console.log("init app manager,%s,%s", appBase, downloadBase);
@@ -107,7 +104,6 @@ exports.init = function (appBase, downloadBase) {
             var app = apps[appId];
             console.log('app.id='+app.id);
             var tmpApp = ce.clone(app);
-            console.log('克隆:  '+ inspect(tmpApp));
 
             tmpApp.appId = tmpApp.id;
             delete tmpApp.id;
@@ -157,9 +153,9 @@ exports.init = function (appBase, downloadBase) {
 
                     var saveApp = new App(tmpApp);
                     saveApp.save(function(err, mapp) {
-                        if(err) return console.log('instll folder更新数据库失败....'+JSON.stringify(err));
-                        console.log('更新成功：'+mapp.appId+'---'+mapp.name);
-                    })
+                        if(err) return console.log('instll folder: Update database failed....'+JSON.stringify(err));
+                        console.log('Update：'+mapp.appId+'---'+mapp.name);
+                    });
                     if (cb) cb(newApp);
                 });
             });
@@ -209,12 +205,12 @@ exports.init = function (appBase, downloadBase) {
         if(!cb) return new Error('No Callback Function Found');
         App.findAppByAppId(appId, function(err, app) {
             if(err) return cb(err, null, null);
-            console.log('先找到app...');
+            console.log('Get app...');
             Room.find({ apps: {   //
                 $in: [app._id]
             }}).exec(function(err, rooms) {
                 if(err) return cb(err, null, null);
-                console.log('再找到rooms，rooms.length='+rooms.length);
+                console.log('Get rooms，rooms.length='+rooms.length);
                 cb(null, rooms, app);
             });
         });
@@ -229,19 +225,17 @@ exports.init = function (appBase, downloadBase) {
             findRoomsByAppId(appId, function(err, rooms, app) {
                 if(err) return console.log('Server Uninstll Error:  '+JSON.stringify(err));
                 rooms.forEach(function(room, index) {
-                    console.log('移除前, length='+room.apps.length);
+                    console.log('Before remove, length='+room.apps.length);
                     room.apps.remove(app);
                     room.save(function(err) {
                         if(err) return console.log('Server Uninstall Error--room save:  '+JSON.stringify(err));
-                        console.log('移除后, length='+room.apps.length);
+                        console.log('After remove, length='+room.apps.length);
                     });
 
-console.log('index='+index+'   length='+rooms.length);
                     if(index == (rooms.length-1)) {
-                        console.log('将要从App中移除。。。');
                         App.remove({appId: appId}).exec(function(err) {
                             if(err) return console.log('Server Uninstll Error--remove app:  '+JSON.stringify(err));
-                            console.log('移除更新App成功');
+                            console.log('Uninstll Successfully');
                         });
                     }
                 });
