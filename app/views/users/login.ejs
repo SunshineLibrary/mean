@@ -1,0 +1,150 @@
+<!-- <h2>Login</h2>
+<% if(req.session.message) {%>
+  <h4><%= req.session.message %>
+  <% req.session.message = null %>
+<% } %>
+<form method="post" action="/login">
+  <div>
+    <label>用户名:</label>
+    <input type="text" name="username" />
+  </div>
+  <div>
+    <label>密码:</label>
+    <input type="password" name="password" />
+  </div>
+  <div>
+    <input type="submit" value="Submit">
+  </div>
+</form> -->
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+        For demonstration purposes, the `title` is dynamically set here based on
+        your `sails.config.appName` to show that you can inject data into layouts
+        exactly the same way as with your other view templates.
+    -->
+    <title>数学提高班</title>
+
+    <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon"/>
+
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+    <!--
+
+      Stylesheets
+      ========================
+
+      You can link any CSS, LESS, or image files in your `assets` directory
+      as you would normally: using <link/> tags.
+      
+    -->
+
+    <!--
+
+      Support for LESS included by default
+      ================================================
+
+      LESS files are automatically compiled when they change using the Gruntfile
+      located in the top-level of this Sails app.  If you run into issues with styles
+      not reloading, check the Sails log output in your console for LESS compilation errors.
+      If necessary, shut down and then lift your app again.
+      
+    -->
+<link rel="stylesheet" href="css/ladda.min.css">
+<link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+   <header class="navbar" style="border-top:solid 0px #ec793a;">
+    <div class="">
+      <h1><a href=""  style="color:#fff"><img src=""></a></h1>
+    </div>
+   </header>
+
+   <div style="background:url(img/bg-room.png) 0% -5% no-repeat;background-size:cover;"><!-- rgba(236,121,58,0.8) -->
+     <div class="container" style="background:url(img/bg-teacher.png) 55% 100% no-repeat;height:450px;">
+      <div class="intro col-lg-8 col-md-8" style="text-align:;color:#fff;font-weight:bold;margin-top:130px;">
+<!--         <h2>教材同步的微视频</h2> <h4>＋</h4> <h2>自适应学习平台</h2> <h4>＝</h4> <h2>数字化学习的全程解决方案</h2> -->
+        <h1 style="font-size:48px;">学习从此不再困难</h1>
+      </div>
+      
+      <div class="login col-lg-4 col-md-4" style="margin-top:100px;">
+        <div style="padding:0 15px;">
+              <h4 style="color:white">登录</h4>
+        </div>
+        <div class="panel-body button-demo">
+            <form method="post" action="/login">      <!--  设置flash信息req.flash('key')  -->
+                <% if(error) {%>
+                  <p><%= error %></p>
+                <% } %>
+                <% if(success) {%>
+                  <p><%= success %></p>
+                <% } %>               
+                 
+                <div class="form-group">
+                    <!--<label for="exampleInputEmail1">Email address</label> -->
+                    <input type="text" class="form-control input" id="" placeholder="用户名/邮箱" name="username">
+                </div>
+                <div class="form-group">
+                    <!--<label for="exampleInputPassword1">Password</label> -->
+                    <input type="password" class="form-control input" id="" placeholder="密码" name="password">
+                </div>
+                <div class="form-group">
+                    <label class="label-checkbox">
+                      <input type="checkbox">
+                      <span class="custom-checkbox" style="color:white;">
+                      下次自动登录</span>
+                    </label>
+                </div>
+                <button type="submit" class="ladda-button btn btn-success
+                 col-ld-12 col-md-12" data-style="expand-right" value="submit">
+                  <span class="ladda-label">登录</span>
+                  <span class="ladda-spinner"></span>
+                  <div class="ladda-progress" style="width: 0px;"></div>
+                </button>
+
+            </form>
+        </div>
+
+<!--         <div class="panel-body">
+            <form>
+                <p>尚未开放注册</p>
+                <button type="submit" class="btn btn-default col-md-12">申请试用</button>
+            </form>
+        </div> -->
+      </div>
+     </div>
+   </div>
+
+   <section class="text-center" style="padding:2em;background:#f2f2f2;">
+    <form>
+      <span>尚未开放注册</span> &nbsp;&nbsp;&nbsp;&nbsp;
+<!--       <a href=""><h4>申请试用</h4></a> -->
+      <button type="submit" class="btn btn-default" data-style="expand-right" value="submit" style="color:#ec793a;background-color:transparent;border-color: #ec793a;">申请试用</button>
+    </form>
+   </section>
+  <script src="js/spin.min.js"></script>
+  <script src="js/ladda.min.js"></script>
+  <script type="text/javascript">
+      // Bind normal buttons
+      Ladda.bind( '.button-demo button', { timeout: 2000 } );
+
+      // Bind progress buttons and simulate loading progress
+      // You can control loading explicitly using the JavaScript API
+      // as outlined below:
+
+      // var l = Ladda.create( document.querySelector( 'button' ) );
+      // l.start();
+      // l.stop();
+      // l.toggle();
+      // l.isLoading();
+      // l.setProgress( 0-1 );
+
+    </script>
+</body>
+</html>

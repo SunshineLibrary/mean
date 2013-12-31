@@ -3,7 +3,9 @@
  */
 exports.requiresLogin = function(req, res, next) {
     if (!req.isAuthenticated()) {
-        return res.send(401, 'User is not authorized');
+        console.log('木有登陆！');
+        return res.redirect('/login');
+        //return res.send(401, 'User is not authorized');
     }
     next();
 };

@@ -14,6 +14,33 @@ exports.authCallback = function (req, res, next) {
     res.redirect('/');
 };
 
+
+//Show Customed form
+exports.register = function(req, res) {
+    res.render('users/register', {
+        error: req.flash('error'),
+        success: req.flash('success')
+    });
+};
+
+exports.login = function(req, res) {
+    res.render('users/login', {
+        error: req.flash('error'),
+        success: req.flash('success')
+    });
+};
+
+exports.auth = function(req, res) {
+    if(req.user) {
+        res.send({
+            'index': '/app/102/index.html'
+        })
+    } else {
+        res.send(401)
+    }
+};
+
+
 /**
  * Show login form
  */
@@ -46,7 +73,7 @@ exports.signout = function (req, res) {
  * Session
  */
 exports.session = function (req, res) {
-    res.redirect('/');
+    res.redirect('/app/102/index.html');
 };
 
 /**
@@ -75,7 +102,7 @@ exports.create = function (req, res) {
         }
         req.logIn(user, function (err) {
             if (err) return next(err);
-            return res.redirect('/');
+            return res.redirect('/app/102/index.html');
         });
     });
 };

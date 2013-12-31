@@ -14,7 +14,7 @@ module.exports = function (app, passport, auth) {
     app.get('/users/me', users.me);
 
     //Setting up the users api
-    app.post('/users', users.create);
+    app.post('/users', users.create);  //register
     app.get('/users', users.all);
     app.get('/users/:userId', users.show);
     app.del('/users/:userId', users.destroy);
@@ -43,11 +43,30 @@ module.exports = function (app, passport, auth) {
 
     app.post('/sync', applications.sync);
 
+
+    app.get('/register', users.register);
+    app.get('/login', users.login);
+    //Liu 
     //Setting the local strategy route
-    app.post('/users/session', passport.authenticate('local', {
+    app.post('/login', passport.authenticate('local', {
         failureRedirect: '/signin',
+        failureFlash: true,
+        successRedirect: '/',
+        successFlash: '登陆成功！'
+    }));
+
+    app.post('/register', users.create);  //register
+    app.get('/auth', users.auth);
+
+
+/*    app.post('/login', passport.authenticate('local', {
+        failureRedirect: '/login',
         failureFlash: true
     }), users.session);
+*/
+
+
+
 
     //Setting the facebook oauth routes
     app.get('/auth/facebook', passport.authenticate('facebook', {
@@ -109,7 +128,7 @@ module.exports = function (app, passport, auth) {
 
     //Home route
     var index = require('../app/controllers/index');
-    app.get('/', index.render);
+    app.get('/', auth.requiresLogin, index.home);
 
     app.post('/sync', applications.sync);
 };

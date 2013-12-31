@@ -57,6 +57,7 @@
     "cloneextend": "0.0.3"
   },
   "devDependencies": {
+    "ejs":"0.8.4",
     "supertest": "latest",
     "should": "latest",
     "grunt-contrib-watch": "latest",

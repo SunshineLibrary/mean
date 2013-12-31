@@ -1,0 +1,24 @@
+<h2>Register</h2>
+<% if(error) { %>
+ <h4> <%= error %></h4>
+<% } %>
+<% if(success) { %>
+ <h4> <%= success %></h4>
+<% } %>
+<form method="post" action="/register">
+  <div>
+    <label>用户名:</label>
+    <input type="text" name="username" />
+  </div>
+  <div>
+    <label>密码:</label>
+    <input type="password" name="password" />
+  </div>
+    <div>
+    <label>用户类型:</label>
+    <input type="text" name="utype" />
+  </div>
+  <div>
+    <input type="submit" value="Submit">
+  </div>
+</form>
