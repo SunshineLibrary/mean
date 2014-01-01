@@ -49,9 +49,9 @@ module.exports = function (app, passport, auth) {
     //Liu 
     //Setting the local strategy route
     app.post('/login', passport.authenticate('local', {
-        failureRedirect: '/signin',
+        failureRedirect: '/login',
         failureFlash: true,
-        successRedirect: '/',
+        successRedirect: '/app/102/index.html',
         successFlash: '登陆成功！'
     }));
 
