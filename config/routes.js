@@ -38,15 +38,15 @@ module.exports = function (app, passport, auth) {
     app.post('/rooms/:roomId/apps', rooms.addApp);
     app.del('/rooms/:roomId/apps/:appId', rooms.removeApp);
 
-    app.get('/userdata/:dataId/:entityId', userdata.read);  //auth.requiresLogin, 
-    app.post('/userdata/:dataId/:entityId', userdata.write);   //auth.requiresLogin, 
+    app.get('/userdata/:dataId/:entityId', auth.requiresLogin, userdata.read);  
+    app.post('/userdata/:dataId/:entityId', auth.requiresLogin, userdata.write);  
 
     app.post('/sync', applications.sync);
 
 
     app.get('/register', users.register);
     app.get('/login', users.login);
-    //Liu 
+    
     //Setting the local strategy route
     /*app.post('/login', passport.authenticate('local', {
         failureRedirect: '/login',
@@ -72,15 +72,6 @@ module.exports = function (app, passport, auth) {
 
     app.post('/register', users.create);  //register
     app.get('/auth', users.auth);
-
-
-/*    app.post('/login', passport.authenticate('local', {
-        failureRedirect: '/login',
-        failureFlash: true
-    }), users.session);
-*/
-
-
 
 
     //Setting the facebook oauth routes
