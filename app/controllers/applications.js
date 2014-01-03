@@ -1,8 +1,8 @@
 /**
  * ApplicationController
  */
-var APP_BASE = 'data/app'
-    , DOWNLOAD_BASE = 'data/dl'
+var APP_BASE = 'public/app'
+    , DOWNLOAD_BASE = 'public/dl'
     , AM = require('../services/am')
     , am = AM.init(APP_BASE, DOWNLOAD_BASE);
 
