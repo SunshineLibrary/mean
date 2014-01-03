@@ -38,8 +38,8 @@ module.exports = function (app, passport, auth) {
     app.post('/rooms/:roomId/apps', rooms.addApp);
     app.del('/rooms/:roomId/apps/:appId', rooms.removeApp);
 
-    app.get('/userdata/:appId/:entityId', auth.requiresLogin, userdata.read);
-    app.post('/userdata/:appId/:entityId', auth.requiresLogin, userdata.write);
+    app.get('/userdata/:dataId/:entityId', userdata.read);  //auth.requiresLogin, 
+    app.post('/userdata/:dataId/:entityId', userdata.write);   //auth.requiresLogin, 
 
     app.post('/sync', applications.sync);
 

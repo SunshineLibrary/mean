@@ -30,6 +30,7 @@ exports.init = function (userdataFolder) {
         fs.writeFileSync(dataFile, data);
         return data;
     }
+    
     var getData = function (user, target) {
         var fileName = base32.encode(target)
             , userFolder = path.join(userdataFolder, user)
