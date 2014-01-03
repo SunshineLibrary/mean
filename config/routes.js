@@ -57,8 +57,13 @@ module.exports = function (app, passport, auth) {
 
     app.post('/login', function(req, res, next) {
         passport.authenticate('local', function(err, user, info) {
+            console.log('message:   '+ info.message);
             if(err) return next(err);
-            if(!user) return res.redirect('/login');
+            if(!user) {
+                //add the flash message 
+                req.flash('error', info.message);
+                return res.redirect('/login');
+            }
             req.logIn(user, function(err) {
                 if(err) return next(err);
                 if(req.user.utype == 'student') {

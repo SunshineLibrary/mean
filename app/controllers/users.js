@@ -24,9 +24,9 @@ exports.register = function(req, res) {
 };
 
 exports.login = function(req, res) {
+    //console.log('error:  '+req.flash('error'));
     res.render('users/login', {
-        error: req.flash('error'),
-        success: req.flash('success')
+        error: req.flash('error')
     });
 };
 
