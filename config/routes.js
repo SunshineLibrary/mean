@@ -48,12 +48,27 @@ module.exports = function (app, passport, auth) {
     app.get('/login', users.login);
     //Liu 
     //Setting the local strategy route
-    app.post('/login', passport.authenticate('local', {
+    /*app.post('/login', passport.authenticate('local', {
         failureRedirect: '/login',
         failureFlash: true,
         successRedirect: '/app/102/index.html',
         successFlash: '登陆成功！'
-    }));
+    }));*/
+
+    app.post('/login', function(req, res, next) {
+        passport.authenticate('local', function(err, user, info) {
+            if(err) return next(err);
+            if(!user) return res.redirect('/login');
+            req.logIn(user, function(err) {
+                if(err) return next(err);
+                if(req.user.utype == 'student') {
+                    res.redirect('/app/102/index.html');
+                } else if(req.user.utype == 'teacher') {
+                    res.redirect('/app/103/index.html');
+                }
+            });
+        })(req, res, next);
+    });
 
     app.post('/register', users.create);  //register
     app.get('/auth', users.auth);
@@ -128,7 +143,7 @@ module.exports = function (app, passport, auth) {
 
     //Home route
     var index = require('../app/controllers/index');
-    app.get('/', auth.requiresLogin, index.home);
+    app.get('/', auth.requiresLogin, auth.user);
 
     app.post('/sync', applications.sync);
 };

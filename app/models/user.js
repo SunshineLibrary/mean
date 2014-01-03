@@ -18,6 +18,11 @@ var UserSchema = new Schema({
         unique: true
     },
     hashed_password: String,
+    utype: {
+        type: String,
+        required: true,
+        default: 'student'
+    },
     provider: String,
     salt: String,
     facebook: {},
