@@ -95,7 +95,7 @@ exports.create = function (req, res) {
                     message = 'Please fill all the required fields';
             }
 
-            return res.render('users/signup', {
+            return res.render('users/register', {
                 message: message,
                 user: user
             });
